@@ -1,0 +1,299 @@
+{
+	"info": {
+		"_postman_id": "99681f2a-f34b-493e-884e-1c1babc716d1",
+		"name": "RunsAccessibility",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "25466131",
+		"_collection_link": "https://instadeepltd.postman.co/workspace/DeepPack-%2Fmulti_bin_packing~258eb07a-be10-4594-a5e0-b1ba496fc6c7/collection/25466131-99681f2a-f34b-493e-884e-1c1babc716d1?action=share&source=collection_link&creator=25466131"
+	},
+	"item": [
+		{
+			"name": "Get All Loads Per Organization",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Response Status Code Should Be 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"const responseJson = pm.response.json();",
+							"const result = responseJson.result;",
+							"const pageInfo = result.pageInfo;",
+							"// get total pages",
+							"let totalPages = pageInfo.total;",
+							"let currentPage = pageInfo.number;",
+							"",
+							"// set load ids list",
+							"let loadsIds ;",
+							"if(currentPage === 1){",
+							" ",
+							"   loadsIds = []",
+							"",
+							"}",
+							"else{",
+							"   // Parse the containerIds collection variable",
+							"   loadsIds = JSON.parse(pm.collectionVariables.get(\"loadsIds\")); ",
+							"}",
+							"data = result.data;",
+							"data.forEach(function (load) {",
+							"",
+							"    loadsIds.push(load.id);",
+							"});",
+							"",
+							"pm.collectionVariables.set(\"loadsIds\", JSON.stringify(loadsIds));",
+							"loadsIds = JSON.parse(pm.collectionVariables.get(\"loadsIds\")); ",
+							"",
+							"if(currentPage < totalPages){",
+							"    let nextPage = currentPage + 1;",
+							"    pm.collectionVariables.set(\"pageNumber\", nextPage);",
+							"    pm.execution.setNextRequest(pm.info.requestId);",
+							"",
+							"}",
+							"else{",
+							"    pm.collectionVariables.set(\"pageNumber\", 1);",
+							"}",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/v1/loads?pageNumber={{pageNumber}}&pageSize=50&loadFilter=all",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"loads"
+					],
+					"query": [
+						{
+							"key": "pageNumber",
+							"value": "{{pageNumber}}"
+						},
+						{
+							"key": "pageSize",
+							"value": "50"
+						},
+						{
+							"key": "loadFilter",
+							"value": "all"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check Runs Accessibility",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response Status Code Should Be 200\", function () {",
+							"    pm.expect(pm.response.code).to.equal(200);",
+							"});",
+							"",
+							"// let responseJson = pm.response.json();",
+							"// let result = responseJson.result;",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"",
+							"// pm.collectionVariables.set(\"runsCount\", result.length);",
+							"",
+							"// pm.test(\"Response Body Should Be As Expected\", function () {",
+							"//     pm.expect(responseJson).to.be.an('object');",
+							"//     pm.expect(responseJson.status).to.equal('success');",
+							"//     pm.expect(responseJson.errorCode).to.equal(null);",
+							"//     pm.expect(responseJson.errorMessage).to.equal(null);",
+							"// });",
+							"",
+							"// pm.test(\"Response Body Structure Should Be As Expected\", function () {",
+							"//     result.forEach(function (run) {",
+							"//         pm.expect(Object.keys(run)).with.lengthOf(2);",
+							"//         pm.expect(run).to.have.property(\"runRequest\").and.to.be.an(\"object\");",
+							"//         let runRequest = run.runRequest;",
+							"//         pm.expect(Object.keys(runRequest)).with.lengthOf(12);",
+							"//         pm.expect(runRequest).to.have.property(\"userId\").and.to.be.a(\"string\");",
+							"//         pm.expect(runRequest).to.have.property(\"createdBy\").and.to.be.a(\"string\");",
+							"//         pm.expect(runRequest).to.have.property(\"id\").and.to.be.a(\"string\");",
+							"//         pm.expect(runRequest).to.have.property(\"name\").and.to.be.a(\"string\");",
+							"//         pm.expect(runRequest).to.have.property(\"loadId\").and.to.be.a(\"string\");",
+							"//         pm.expect(runRequest).to.have.property(\"runContainersInfos\").and.to.be.a(\"array\");",
+							"//         let runContainersInfos = runRequest.runContainersInfos;",
+							"//         runContainersInfos.forEach(function (container) {",
+							"//             pm.expect(Object.keys(container)).with.lengthOf(3);",
+							"//             pm.expect(container).to.have.property(\"containerId\").and.to.be.a(\"string\");",
+							"//             pm.expect(container).to.have.property(\"containerName\").and.to.be.a(\"string\");",
+							"//             pm.expect(container).to.have.property(\"count\").and.to.be.a(\"number\");",
+							"//         })",
+							"//         pm.expect(runRequest).to.have.property(\"executionMode\").and.to.be.a(\"string\");",
+							"//         pm.expect(runRequest).to.have.property(\"timeLimit\").and.to.be.a(\"number\");",
+							"//         pm.expect(runRequest).to.have.property(\"supportRatio\").and.to.be.a(\"number\");",
+							"//         pm.expect(runRequest).to.have.property(\"ceilingClearance\").and.to.be.a(\"number\");",
+							"//         pm.expect(runRequest).to.have.property(\"enableAutoStepByStepPdfGeneration\").and.to.a(\"boolean\");",
+							"//         pm.expect(runRequest).to.have.property(\"isDeletable\").and.to.be.a(\"boolean\");",
+							"",
+							"",
+							"//         pm.expect(run).to.have.property(\"runResult\").and.to.be.an(\"object\");",
+							"//         let runResult = run.runResult;",
+							"//         pm.expect(Object.keys(runResult)).with.lengthOf(10);",
+							"//         pm.expect(runResult).to.have.property(\"status\").and.to.be.a(\"string\");",
+							"//         pm.expect(runResult).to.have.property(\"createdOn\").and.to.be.a(\"string\");",
+							"//         pm.expect(runResult).to.have.property(\"startedOn\").and.to.be.a(\"string\");",
+							"//         pm.expect(runResult).to.have.property(\"finishedOn\").and.to.satisfy(val => val === null || typeof val === 'string');",
+							"//         pm.expect(runResult).to.have.property(\"updatedOn\").and.to.be.a(\"string\");",
+							"//         pm.expect(runResult).to.have.property(\"isBestRun\").and.to.be.a(\"boolean\");",
+							"//         pm.expect(runResult).to.have.property(\"score\").and.to.be.a(\"number\");",
+							"//         pm.expect(runResult).to.have.property(\"packingStatus\").and.to.be.a(\"string\");",
+							"//         pm.expect(runResult).to.have.property(\"containers\").and.to.be.a(\"object\");",
+							"//         let containers = runResult.containers;",
+							"//         pm.expect(Object.keys(containers)).with.lengthOf(2);",
+							"//         pm.expect(containers).to.have.property(\"count\").and.to.be.a(\"number\");",
+							"//         pm.expect(containers).to.have.property(\"data\").and.to.be.an(\"array\");",
+							"//         pm.expect(runResult).to.have.property(\"remainingItems\").and.to.be.an(\"array\");",
+							"",
+							"",
+							"//     })",
+							"",
+							"// });"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"let loadIds = JSON.parse(pm.collectionVariables.get(\"loadsIds\"));",
+							"let index = parseInt(pm.collectionVariables.get(\"idIndex\"), 10);",
+							"",
+							"if(index < loadIds.length){",
+							"   let id = loadIds[index];",
+							"   pm.collectionVariables.set(\"loadId\", id);",
+							"   pm.execution.setNextRequest(pm.info.requestId);",
+							"   index = index + 1;",
+							"   pm.collectionVariables.set(\"idIndex\",  index);",
+							"   ",
+							"}",
+							"else{",
+							"",
+							"    pm.collectionVariables.set(\"idIndex\",  0);",
+							"}"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/v1/loads/:loadId/runs",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"loads",
+						":loadId",
+						"runs"
+					],
+					"variable": [
+						{
+							"key": "loadId",
+							"value": "{{loadId}}"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "apikey",
+		"apikey": [
+			{
+				"key": "value",
+				"value": "{{api_key}}",
+				"type": "string"
+			},
+			{
+				"key": "key",
+				"value": "x-deeppack-api-key",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "pageNumber",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "loadId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "loadsIds",
+			"value": ""
+		},
+		{
+			"key": "idIndex",
+			"value": "0"
+		}
+	]
+}

@@ -1,0 +1,324 @@
+
+variables:
+   USERNAME: $DEEPPACK_USER_NAME
+   PASSWORD: $DEEPPACK_PASSWORD
+   CI: true
+   POSTMAN_COLLECTION: "postman_collections/smoke-testing.postman_collection.json"
+   POSTMAN_ENVIRONMENT: "postman_environments/develop.postman_environment.json"
+   RUNS_ACCESS_COLLECTION: "postman_collections/runsAccessibility.postman_collection.json"
+   STAGING_POSTMAN_ENV: "postman_environments/staging.postman_environment.json"
+
+api-smoke:
+  stage: e2e-test
+  tags:
+    - kos-deep-pack-qa-runner
+  allow_failure: false
+  image: mcr.microsoft.com/playwright:v1.34.3-jammy
+  variables:
+    UPS_ID: "org_qE3EZCoWWVH9P1I6"
+    MYRIAD_ID: "org_MSFjPDlxIbgWXpiE"
+    INSTA_ID: "org_3Lhmn22MuYszBVoC"
+  needs: [ deploy-preprod, ray-serve-beta-boot-up ]
+  only:
+    - master
+
+  before_script:
+
+    - export WEB_URL=https://test-organization.beta.next.deeppack.ai
+    - export API_URL=https://api.beta.next.deeppack.ai
+    - echo $WEB_URL
+    - cd $CI_PROJECT_DIR/e2e-tests/api-tests
+    - npm ci
+    - npx playwright install
+    - npm install -g newman
+    - export API_KEY=$(node getApiKey.js | grep 'API Key:' | awk '{print $3}')
+
+  script:
+    #- newman run $POSTMAN_COLLECTION --env-var "api_key=$API_KEY" --env-var "base_url=$API_URL" -e $STAGING_POSTMAN_ENV --delay-request 200 -r cli,junit,htmlextra
+    #- declare -A clients
+    #- clients["ups"]=$UPS_ID
+    #- clients["myriad360"]=$MYRIAD_ID
+    #- clients["instadeep"]=$INSTA_ID
+    #- |
+    #    TEST_FAILED=false
+    #    for org in "${!clients[@]}"; do
+    #      export WEB_URL=https://$org.beta.next.deeppack.ai
+    #      echo $WEB_URL
+    #      export API_KEY=$(node getApiKey.js | grep 'API Key:' | awk '{print $3}')
+    #      newman run $RUNS_ACCESS_COLLECTION --env-var "api_key=$API_KEY" --env-var "base_url=$API_URL" --env-var "orgId=${clients[$org]}" -e $POSTMAN_ENVIRONMENT --delay-request 200 -r cli,junit,htmlextra || TEST_FAILED=true
+    #    done
+    #    if [ "$TEST_FAILED" = "true" ]; then exit 1; fi
+    - echo "Job is running"
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - .npm/
+
+  artifacts:
+    when: always
+    reports:
+      junit:
+        - $CI_PROJECT_DIR/e2e-tests/api-tests/newman/*.xml
+    paths:
+        - $CI_PROJECT_DIR/e2e-tests/api-tests/newman/*.html
+        - $CI_PROJECT_DIR/e2e-tests/api-tests/newman/*.xml
+
+
+api-tests:
+  stage: e2e-test
+  tags:
+    - kos-deep-pack-qa-runner
+  allow_failure: false
+  image: mcr.microsoft.com/playwright:v1.34.3-jammy
+  variables:
+    UPS_ID: "org_VbSU9LRfKtxbJTgn"
+    MYRIAD_ID: "org_jE57uqUv2n5OQZYO"
+    INSTA_ID: "org_c9ZMg0EC0lo1BsM7"
+  
+  needs: [ ray-serve-boot-up ]
+  except:
+    refs:
+      - master
+      - develop
+      - /^hotfix.*/
+      - schedules
+
+
+
+  before_script:
+
+    - export RELEASE_NAME=$(eval "echo ${CI_COMMIT_REF_SLUG:0:15} | sed 's/-*$//'")
+    - export WEB_URL=https://test-organization.dev.deeppack.ai/$RELEASE_NAME
+    - export API_URL=https://api.dev.deeppack.ai/$RELEASE_NAME
+    - echo $WEB_URL
+    - cd $CI_PROJECT_DIR/e2e-tests/api-tests
+    - npm ci
+    - npx playwright install
+    - npm install -g newman
+    - npm install -g newman-reporter-htmlextra
+    - export API_KEY=$(node getApiKey.js | grep 'API Key:' | awk '{print $3}')
+
+  script:
+    #- newman run $POSTMAN_COLLECTION --env-var "api_key=$API_KEY" --env-var "base_url=$API_URL" -e $POSTMAN_ENVIRONMENT --delay-request 200 -r cli,junit,htmlextra
+    #- declare -A clients
+    #- clients["ups"]=$UPS_ID
+    #- clients["myriad360"]=$MYRIAD_ID
+    #- clients["instadeep"]=$INSTA_ID
+    #- |
+    #    TEST_FAILED=false
+    #    for org in "${!clients[@]}"; do
+    #      export WEB_URL=https://$org.dev.deeppack.ai/$RELEASE_NAME
+    #      echo $WEB_URL
+    #      export API_KEY=$(node getApiKey.js | grep 'API Key:' | awk '{print $3}')
+    #      newman run $RUNS_ACCESS_COLLECTION --env-var "api_key=$API_KEY" --env-var "base_url=$API_URL" --env-var "orgId=${clients[$org]}" -e $POSTMAN_ENVIRONMENT --delay-request 200 -r cli,junit,htmlextra || TEST_FAILED=true
+    #    done
+    #    if [ "$TEST_FAILED" = "true" ]; then exit 1; fi
+    - echo "Job is running"
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - .npm/
+
+  artifacts:
+    when: always
+    reports:
+      junit:
+        - $CI_PROJECT_DIR/e2e-tests/api-tests/newman/*.xml
+    paths:
+        - $CI_PROJECT_DIR/e2e-tests/api-tests/newman/*.html
+        - $CI_PROJECT_DIR/e2e-tests/api-tests/newman/*.xml
+
+
+
+api-hotfix:
+  stage: e2e-test
+  tags:
+    - kos-deep-pack-qa-runner
+  allow_failure: false
+  image: mcr.microsoft.com/playwright:v1.34.3-jammy
+  variables:
+    UPS_ID: "org_qE3EZCoWWVH9P1I6"
+    MYRIAD_ID: "org_MSFjPDlxIbgWXpiE"
+    INSTA_ID: "org_3Lhmn22MuYszBVoC"
+  #needs: [ deploy-api , deploy-core ,  deploy-web, deploy-ssr-renderer, deploy-api-doc, ray-serve-boot-up ]
+  when: manual
+  only:
+    - /^hotfix.*/
+
+  before_script:
+     - export RELEASE_NAME=$(eval "echo ${CI_COMMIT_REF_SLUG:0:15} | sed 's/-*$//'")
+     - export WEB_URL=https://test-organization.dev.deeppack.ai/$RELEASE_NAME
+     - export API_URL=https://api.dev.deeppack.ai/$RELEASE_NAME
+     - echo $WEB_URL
+     - cd $CI_PROJECT_DIR/e2e-tests/api-tests
+     - npm ci
+     - npx playwright install
+     - npm install -g newman
+     - export API_KEY=$(node getApiKey.js | grep 'API Key:' | awk '{print $3}')
+
+
+  script:
+    #- newman run $POSTMAN_COLLECTION --env-var "api_key=$API_KEY" --env-var "base_url=$API_URL" -e $POSTMAN_ENVIRONMENT --delay-request 200 -r cli,junit,htmlextra
+    #- declare -A clients
+    #- clients["ups"]=$UPS_ID
+    #- clients["myriad360"]=$MYRIAD_ID
+    #- clients["instadeep"]=$INSTA_ID
+    #- |
+    #    TEST_FAILED=false
+    #    for org in "${!clients[@]}"; do
+    #      export WEB_URL=https://$org.dev.deeppack.ai/$RELEASE_NAME
+    #      echo $WEB_URL
+    #      export API_KEY=$(node getApiKey.js | grep 'API Key:' | awk '{print $3}')
+    #      newman run $RUNS_ACCESS_COLLECTION --env-var "api_key=$API_KEY" --env-var "base_url=$API_URL" --env-var "orgId=${clients[$org]}" -e $POSTMAN_ENVIRONMENT --delay-request 200 -r cli,junit,htmlextra || TEST_FAILED=true
+    #    done
+  #    if [ "$TEST_FAILED" = "true" ]; then exit 1; fi
+    - echo "Job is running"
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - .npm/
+
+  artifacts:
+    when: always
+    reports:
+      junit:
+        - $CI_PROJECT_DIR/e2e-tests/api-tests/newman/*.xml
+    paths:
+        - $CI_PROJECT_DIR/e2e-tests/api-tests/newman/*.html
+        - $CI_PROJECT_DIR/e2e-tests/api-tests/newman/*.xml
+
+
+
+api-nightly:
+  stage: e2e-test
+  tags:
+    - kos-deep-pack-qa-runner
+  image: mcr.microsoft.com/playwright:v1.34.3-jammy
+  variables:
+    UPS_ID: "org_qE3EZCoWWVH9P1I6"
+    MYRIAD_ID: "org_MSFjPDlxIbgWXpiE"
+    INSTA_ID: "org_3Lhmn22MuYszBVoC"
+  needs: [ ray-serve-boot-up-nightly ]
+  before_script:
+     - export WEB_URL=https://test-organization.dev.deeppack.ai
+     - export API_URL=https://api.dev.deeppack.ai
+     - echo $WEB_URL
+     - cd $CI_PROJECT_DIR/e2e-tests/api-tests
+     - npm ci
+     - npx playwright install
+     - npm install -g newman
+     - export API_KEY=$(node getApiKey.js | grep 'API Key:' | awk '{print $3}')
+
+  script:
+    #- newman run $POSTMAN_COLLECTION --env-var "api_key=$API_KEY" --env-var "base_url=$API_URL" -e $POSTMAN_ENVIRONMENT --delay-request 200 -r cli,junit,htmlextra
+    #- declare -A clients
+    #- clients["ups"]=$UPS_ID
+    #- clients["myriad360"]=$MYRIAD_ID
+    #- clients["instadeep"]=$INSTA_ID
+    #- |
+    #    TEST_FAILED=false
+    #    for org in "${!clients[@]}"; do
+    #      export WEB_URL=https://$org.dev.deeppack.ai
+    #      echo $WEB_URL
+    #      export API_KEY=$(node getApiKey.js | grep 'API Key:' | awk '{print $3}')
+    #      newman run $RUNS_ACCESS_COLLECTION --env-var "api_key=$API_KEY" --env-var "base_url=$API_URL" --env-var "orgId=${clients[$org]}" -e $POSTMAN_ENVIRONMENT --delay-request 200 -r cli,junit,htmlextra || TEST_FAILED=true
+    #    done
+  #    if [ "$TEST_FAILED" = "true" ]; then exit 1; fi
+    - echo "Job is running"
+  rules:
+    - if: $SCHEDULE_TIME == "nightly"
+  
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - .npm/
+  artifacts:
+    when: always
+    reports:
+      junit:
+        - $CI_PROJECT_DIR/e2e-tests/api-tests/newman/*.xml
+    paths:
+        - $CI_PROJECT_DIR/e2e-tests/api-tests/newman/*.html
+        - $CI_PROJECT_DIR/e2e-tests/api-tests/newman/*.xml
+
+ray-serve-boot-up:
+  stage: e2e-test
+  image: alpine/k8s:1.24.9
+  tags:
+    - "kos-deep-pack-runner"
+    - "kao-products"
+
+  needs: [ deploy ]
+  when: manual
+  except:
+    refs:
+     - master
+     - develop
+     - /^release.*/
+     - schedules
+  before_script:
+
+    - export RELEASE_NAME=$(eval "echo ${CI_COMMIT_REF_SLUG:0:15} | sed 's/-*$//'")
+    - cd $CI_PROJECT_DIR/e2e-tests/api-tests
+
+  script:
+     # wait for ray-serve to boot up
+    - |
+      export POD_STATUS=""
+      until [ "$POD_STATUS" == "Running" ]; do
+         export POD_STATUS=$(kubectl get pods --namespace deep-pack -l "app=ray-serve,release=$RELEASE_NAME" -o jsonpath="{.items[0].status.phase}")
+         echo "ray serve status:$POD_STATUS"
+         sleep 2
+      done
+
+
+ray-serve-beta-boot-up:
+  stage: e2e-test
+  image: alpine/k8s:1.24.9
+  tags:
+    - staging
+    - gcp
+  needs: [deploy-preprod]
+  only:
+     - master
+  script:
+     # wait for ray-serve to boot up
+    - |
+      export POD_STATUS=""
+      until [ "$POD_STATUS" == "Running" ]; do
+         export POD_STATUS=$(kubectl get pods --namespace deep-pack -l "app=ray-serve,release=gcp-beta" -o jsonpath="{.items[0].status.phase}")
+         echo "ray serve status:$POD_STATUS"
+         sleep 2
+      done
+
+ray-serve-boot-up-nightly:
+  stage: e2e-test
+  image: alpine/k8s:1.24.9
+  tags:
+    - "kos-deep-pack-runner"
+    - "kao-products"
+  before_script:
+
+    - cd $CI_PROJECT_DIR/e2e-tests/api-tests
+
+  script:
+     # install wildcard TLS certificate
+    - kubectl apply -f ../../deployment/infra/deeppack-wildcard-ai-cert.yaml --namespace deep-pack
+     # wait for ray-serve to boot up
+    - |
+      export POD_STATUS=""
+      until [ "$POD_STATUS" == "Running" ]; do
+         export POD_STATUS=$(kubectl get pods --namespace deep-pack -l "app=ray-serve,release=ray-serve-develop" -o jsonpath="{.items[0].status.phase}")
+         echo "ray serve status:$POD_STATUS"
+         sleep 2
+      done
+  rules:
+    - if: $SCHEDULE_TIME == "nightly"
